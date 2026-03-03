@@ -201,6 +201,8 @@ void createAccount()
 
 float calculateFinal(Student s)
 {
+	//Calculate final result based on the given weightage
+    
     return (s.marksFinalExam * 0.40f) +
         (s.marksAssignment * 0.20f) +
         (s.marksSmallExam * 0.20f) +
