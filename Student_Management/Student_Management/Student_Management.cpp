@@ -1,4 +1,4 @@
-// Student_Management.cpp : This file contains the 'main' function. Program execution begins and ends there.
+﻿// Student_Management.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
 
 #include <stdio.h>
@@ -15,11 +15,13 @@ typedef struct Student
     char studentCourse[30];
     char studentAddress[100];
     char studentContactNum[15];
-    float marksAssignment; 
-    float marksSmallExam; 
-    float marksFinalExam; 
+    float marksAssignment;
+    float marksSmallExam;
+    float marksFinalExam;
     float marksTutorial;
     float finalExam;
+    int totalClasses;
+    int attendedClasses;
 } Student;
 
 void createAccount();
@@ -29,8 +31,12 @@ void deleteInfo();
 void searchInfo();
 void exportToText();
 void importFromText();
+
 float calculateFinal(Student s);
 void displayFinalResult(Student s);
+int   idExists(const char* id);
+
+
 
 int main()
 {
@@ -54,27 +60,13 @@ int main()
 
         switch (option)
         {
-        case '1':
-            createAccount();
-            break;
-        case '2':
-            displayInfo();
-            break;
-        case '3':
-            updateInfo();
-            break;
-        case '4':
-            deleteInfo();
-            break;
-        case '5':
-            searchInfo();
-            break;
-        case '6': 
-            exportToText();
-            break;
-        case '7': 
-            importFromText(); 
-            break;
+        case '1': createAccount();   break;
+        case '2': displayInfo();     break;
+        case '3': updateInfo();      break;
+        case '4': deleteInfo();      break;
+        case '5': searchInfo();      break;
+        case '6': exportToText();    break;
+        case '7': importFromText();  break;
         case '0':
             printf("\n\t\t\t====== Thank You ======");
             break;
@@ -94,7 +86,7 @@ void createAccount()
         printf("\n\t\t\tError !\n");
     }
 
-    Student stundentInformation;
+    Student studentInformation;
 
     system("cls");
 
@@ -102,9 +94,17 @@ void createAccount()
 
     printf("\n\t\t\tEnter Student's Name : ");
     getchar();
-    gets_s(stundentInformation.studentName);
+    gets_s(studentInformation.studentName);
+
     printf("\t\t\tEnter Student's ID : ");
-    gets_s(stundentInformation.studentId);
+    gets_s(studentInformation.studentId);
+
+    // Check for duplicate ID
+    while (idExists(studentInformation.studentId)) {
+        printf("\n\t\t\tThis ID already exists! Enter a different ID: ");
+        gets_s(studentInformation.studentId);
+    }
+
     {
         int typeChoice = 0;
         printf("\t\t\tSelect Student Dept:\n\t\t\t1. Local\n\t\t\t2. International\n\t\t\tEnter choice (1-2): ");
@@ -118,12 +118,12 @@ void createAccount()
             }
             if (typeChoice == 1)
             {
-                strcpy(stundentInformation.studentDept, "Local");
+                strcpy(studentInformation.studentDept, "Local");
                 break;
             }
             else if (typeChoice == 2)
             {
-                strcpy(stundentInformation.studentDept, "Int");
+                strcpy(studentInformation.studentDept, "Int");
                 break;
             }
             else
@@ -146,27 +146,27 @@ void createAccount()
             }
             if (courseChoice == 1)
             {
-                strcpy(stundentInformation.studentCourse, "MSc SE");
+                strcpy(studentInformation.studentCourse, "MSc SE");
                 break;
             }
             else if (courseChoice == 2)
             {
-                strcpy(stundentInformation.studentCourse, "MSc DSA");
+                strcpy(studentInformation.studentCourse, "MSc DSA");
                 break;
             }
             else if (courseChoice == 3)
             {
-                strcpy(stundentInformation.studentCourse, "MSc CS");
+                strcpy(studentInformation.studentCourse, "MSc CS");
                 break;
             }
             else if (courseChoice == 4)
             {
-                strcpy(stundentInformation.studentCourse, "MSc AIS");
+                strcpy(studentInformation.studentCourse, "MSc AIS");
                 break;
             }
             else if (courseChoice == 5)
             {
-                strcpy(stundentInformation.studentCourse, "MSc AIMS");
+                strcpy(studentInformation.studentCourse, "MSc AIMS");
                 break;
             }
             else
@@ -177,20 +177,33 @@ void createAccount()
         getchar();
     }
     printf("\t\t\tEnter Student's Address : ");
-    gets_s(stundentInformation.studentAddress);
+    gets_s(studentInformation.studentAddress);
     printf("\t\t\tEnter Student's Contact Number : ");
-    gets_s(stundentInformation.studentContactNum);
+    gets_s(studentInformation.studentContactNum);
 
     printf("\t\t\tEnter Assignment Marks : ");
-    scanf("%f", &stundentInformation.marksAssignment);
+    scanf("%f", &studentInformation.marksAssignment);
     printf("\t\t\tEnter Small Exam Marks : ");
-    scanf("%f", &stundentInformation.marksSmallExam);
+    scanf("%f", &studentInformation.marksSmallExam);
     printf("\t\t\tEnter Final Exam Marks : ");
-    scanf("%f", &stundentInformation.marksFinalExam);
+    scanf("%f", &studentInformation.marksFinalExam);
     printf("\t\t\tEnter Tutorial Marks : ");
-    scanf("%f", &stundentInformation.marksTutorial);
+    scanf("%f", &studentInformation.marksTutorial);
 
-    fwrite(&stundentInformation, sizeof(stundentInformation), 1, fileOne);
+    printf("\t\t\tEnter Total Classes Conducted: ");
+    scanf("%d", &studentInformation.totalClasses);
+
+    printf("\t\t\tEnter Classes Attended: ");
+    scanf("%d", &studentInformation.attendedClasses);
+
+    while (studentInformation.attendedClasses > studentInformation.totalClasses ||
+        studentInformation.attendedClasses < 0)
+    {
+        printf("\t\t\tInvalid attendance. Enter again: ");
+        scanf("%d", &studentInformation.attendedClasses);
+    }
+
+    fwrite(&studentInformation, sizeof(studentInformation), 1, fileOne);
 
     printf("\n\n\t\t\tInformations have been stored sucessfully\n");
     printf("\n\n\t\t\tEnter any keys to continue.......");
@@ -201,12 +214,13 @@ void createAccount()
 
 float calculateFinal(Student s)
 {
-	//Calculate final result based on continuous assessment and final exam marks
-    
+    //Calculate Final Marks
+
     return (s.marksFinalExam * 0.40f) +
         (s.marksAssignment * 0.20f) +
         (s.marksSmallExam * 0.20f) +
         (s.marksTutorial * 0.20f);
+
 }
 
 void displayFinalResult(Student s)
@@ -222,6 +236,7 @@ void displayInfo()
     if (fileOne == NULL)
     {
         printf("\n\t\t\tError !\n");
+        return;
     }
 
     Student stundentInformation;
@@ -230,13 +245,11 @@ void displayInfo()
 
     printf("\t\t\t\t====== All Students Information ======\n");
 
-    printf("\n\n\t\t%-20s%-13s%-10s%-25s%-15s\n", "Name", "ID", "Dept", "Address", "Contact", "Final Marks");
-    printf("\t\t---------------------------------------------------------------");
+    printf("\n\n\t\t%-20s%-13s%-10s%-25s%-15s%-12s%-15s\n",
+        "Name", "ID", "Dept", "Address", "Contact", "Attend%", "Status");
 
-    while (fread(&stundentInformation, sizeof(stundentInformation), 1, fileOne) == 1)
-    {
-        printf("\n\n\t\t%-20s%-13s%-10s%-25s%-15s", stundentInformation.studentName, stundentInformation.studentId, stundentInformation.studentDept, stundentInformation.studentAddress, stundentInformation.studentContactNum);
-    }
+    printf("\t\t---------------------------------------------------------------------------------------------");
+
 
     printf("\n\n\t\tEnter any keys to continue.......");
     _getch();
@@ -600,17 +613,17 @@ void exportToText()
 
     while (fread(&s, sizeof(Student), 1, fileOne) == 1)
     {
-        fprintf(out, "%s,%s,%s,%s,%s,%s,%.2f,%.2f,%.2f,%.2f,%.2f\n", 
-            s.studentName, 
-            s.studentId, 
-            s.studentDept, 
-            s.studentCourse, 
-            s.studentAddress, 
-            s.studentContactNum, 
-            s.marksAssignment, 
-            s.marksSmallExam, 
-            s.marksFinalExam, 
-            s.marksTutorial, 
+        fprintf(out, "%s,%s,%s,%s,%s,%s,%.2f,%.2f,%.2f,%.2f,%.2f\n",
+            s.studentName,
+            s.studentId,
+            s.studentDept,
+            s.studentCourse,
+            s.studentAddress,
+            s.studentContactNum,
+            s.marksAssignment,
+            s.marksSmallExam,
+            s.marksFinalExam,
+            s.marksTutorial,
             calculateFinal(s)
         );
     }
@@ -644,17 +657,17 @@ void importFromText()
     {
         // Parse CSV line
         sscanf(line, "%49[^,],%14[^,],%9[^,],%29[^,],%99[^,],%14[^,],%f,%f,%f,%f,%f",
-            s.studentName, 
-            s.studentId, 
-            s.studentDept, 
-            s.studentCourse, 
-            s.studentAddress, 
-            s.studentContactNum, 
-            &s.marksAssignment, 
-            &s.marksSmallExam, 
-            &s.marksFinalExam, 
-            &s.marksTutorial, 
-            &s.finalExam 
+            s.studentName,
+            s.studentId,
+            s.studentDept,
+            s.studentCourse,
+            s.studentAddress,
+            s.studentContactNum,
+            &s.marksAssignment,
+            &s.marksSmallExam,
+            &s.marksFinalExam,
+            &s.marksTutorial,
+            &s.finalExam
         );
 
         fwrite(&s, sizeof(Student), 1, out);
@@ -667,6 +680,28 @@ void importFromText()
     printf("\n\t\t\tPress any key to continue...");
     _getch();
 }
+
+int idExists(const char* id) {
+    FILE* file = fopen("studentInfo.bin", "rb");
+    if (!file) return 0; // No file yet → no duplicates
+
+    Student s;
+    while (fread(&s, sizeof(Student), 1, file) == 1) {
+        if (strcmp(s.studentId, id) == 0) {
+            fclose(file);
+            return 1; // ID found
+        }
+    }
+
+    fclose(file);
+    return 0; // ID not found
+}
+
+
+
+
+
+
 
 // Run program: Ctrl + F5 or Debug > Start Without Debugging menu
 // Debug program: F5 or Debug > Start Debugging menu
