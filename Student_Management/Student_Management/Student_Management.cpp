@@ -33,6 +33,8 @@ void exportToText();
 void importFromText();
 void showReports();
 
+void generateNextId(char* buffer, int size);
+
 float calculateFinal(Student s);
 float calculateAttendance(Student s);
 int idExists(const char* id);
@@ -62,6 +64,7 @@ int main()
         printf("\n\t\t\t6. Export Data to Text File");
         printf("\n\t\t\t7. Import Edited Text File");
         printf("\n\t\t\t8. Reports & Analytics");
+
         printf("\n\t\t\t0. Exit");
 
         printf("\n\n\n\t\t\tEnter Your Option: ");
@@ -77,6 +80,7 @@ int main()
         case '6': exportToText();    break;
         case '7': importFromText();  break;
         case '8': showReports();     break;
+
         case '0':
             printf("\n\t\t\t====== Thank You ======");
             break;
@@ -86,6 +90,30 @@ int main()
     }
     return 0;
 }
+
+// Generate next sequential student ID in format S0001
+void generateNextId(char* buffer, int size)
+{
+    FILE* file = fopen("studentInfo.bin", "rb");
+    int maxNum = 0;
+    if (file)
+    {
+        Student s;
+        while (fread(&s, sizeof(s), 1, file) == 1)
+        {
+            if (s.studentId[0] == 'S')
+            {
+                int num = atoi(s.studentId + 1);
+                if (num > maxNum) maxNum = num;
+            }
+        }
+        fclose(file);
+    }
+    int next = maxNum + 1;
+    _snprintf(buffer, size, "S%04d", next);
+}
+
+
 
 void createAccount()
 {
@@ -105,11 +133,9 @@ void createAccount()
     getchar();
 
     inputString("\tEnter Name: ", studentInformation.studentName, 50);
-    inputString("\tEnter ID: ", studentInformation.studentId, 15);
-
-    // Check for duplicate ID
-    while (idExists(studentInformation.studentId))
-        inputString("\tID exists! Enter another ID: ", studentInformation.studentId, 15);
+    // Generate sequential student ID automatically
+    generateNextId(studentInformation.studentId, 15);
+    printf("\tAssigned Student ID: %s\n", studentInformation.studentId);
 
     chooseDepartment(&studentInformation);
     chooseCourse(&studentInformation);
@@ -118,20 +144,13 @@ void createAccount()
     inputString("\tEnter Contact: ", studentInformation.studentContactNum, 15);
 
 
-    printf("\t\t\tEnter Assignment Marks : ");
-    scanf("%f", &studentInformation.marksAssignment);
-    printf("\t\t\tEnter Small Exam Marks : ");
-    scanf("%f", &studentInformation.marksSmallExam);
-    printf("\t\t\tEnter Final Exam Marks : ");
-    scanf("%f", &studentInformation.marksFinalExam);
-    printf("\t\t\tEnter Tutorial Marks : ");
-    scanf("%f", &studentInformation.marksTutorial);
+    // Read marks with validation (0-100)
+    studentInformation.marksAssignment = getValidMark("\t\t\tEnter Assignment Marks");
+    studentInformation.marksSmallExam = getValidMark("\t\t\tEnter Small Exam Marks");
+    studentInformation.marksFinalExam = getValidMark("\t\t\tEnter Final Exam Marks");
+    studentInformation.marksTutorial = getValidMark("\t\t\tEnter Tutorial Marks");
 
-    /*studentInformation.marksAssignment = getValidMark("\tAssignment Marks");
-    studentInformation.marksAssignment = getValidMark("\tAssignment Marks");
-    studentInformation.marksSmallExam = getValidMark("\tSmall Exam Marks");
-    studentInformation.marksFinalExam = getValidMark("\tFinal Exam Marks");
-    studentInformation.marksTutorial = getValidMark("\tTutorial Marks");*/
+
 
     getValidAttendance(&studentInformation);
 
@@ -160,10 +179,11 @@ void displayInfo()
 
     printf("\t\t\t\t====== All Students Information ======\n");
 
-    printf("\n\n\t\t%-20s%-13s%-10s%-25s%-15s%-12s%-15s\n",
-        "Name", "ID", "Dept", "Address", "Contact", "Attend%", "Status");
+    // Table header matching row widths so columns line up
+    printf("\n\n\t\t| %-12s %-10s %-16s %-8s %-16s  %-11s %10s %8s |\n",
+        "Name", "ID", "Address", "Dept", "Course", "Contact", "Final", "Attend%");
 
-    printf("\t\t---------------------------------------------------------------------------------------------");
+    printf("\t\t+------------------------------------------------------------------------------------+\n");
 
     while (fread(&stundentInformation, sizeof(stundentInformation), 1, fileOne) == 1)
     {
@@ -304,9 +324,32 @@ void updateInfo()
             }
             else if (choice == 6)
             {
-                printf("\n\t\t\tEnter Student Assignment Mark to Update: ");
-                scanf("%f", &tempInformation.marksAssignment);
+                tempInformation.marksAssignment = getValidMark("\n\t\t\tEnter Student Assignment Mark to Update");
                 studentInformation.marksAssignment = tempInformation.marksAssignment;
+
+                fwrite(&studentInformation, sizeof(studentInformation), 1, temp);
+                printf("\n\n\t\t\tUpdated successfully!\n\n");
+            }
+            else if (choice == 7)
+            {
+                tempInformation.marksSmallExam = getValidMark("\n\t\t\tEnter Student Small Exam Mark to Update");
+                studentInformation.marksSmallExam = tempInformation.marksSmallExam;
+
+                fwrite(&studentInformation, sizeof(studentInformation), 1, temp);
+                printf("\n\n\t\t\tUpdated successfully!\n\n");
+            }
+            else if (choice == 8)
+            {
+                tempInformation.marksFinalExam = getValidMark("\n\t\t\tEnter Student Final Exam Mark to Update");
+                studentInformation.marksFinalExam = tempInformation.marksFinalExam;
+
+                fwrite(&studentInformation, sizeof(studentInformation), 1, temp);
+                printf("\n\n\t\t\tUpdated successfully!\n\n");
+            }
+            else if (choice == 9)
+            {
+                tempInformation.marksTutorial = getValidMark("\n\t\t\tEnter Student Tutorial Mark to Update");
+                studentInformation.marksTutorial = tempInformation.marksTutorial;
 
                 fwrite(&studentInformation, sizeof(studentInformation), 1, temp);
                 printf("\n\n\t\t\tUpdated successfully!\n\n");
@@ -848,9 +891,17 @@ void printStudentRow(Student s)
 {
     float att = calculateAttendance(s);
 
-    printf("\n%-20s %-10s %-12s %-20s %-12s %.2f%%",
-        s.studentName, s.studentId, s.studentDept,
-        s.studentAddress, s.studentContactNum, att);
+    float finalScore = calculateFinal(s);
+    // Print row with separators matching the header widths. Truncate long strings to keep alignment.
+    printf("\n\t\t| %-12s %-10.10s %-16.16s %-8.8s %-16.16s  %-11.11s %10.2f %8.2f%% |",
+        s.studentName,
+        s.studentId,
+        s.studentAddress,
+        s.studentDept,
+        s.studentCourse,
+        s.studentContactNum,
+        finalScore,
+        att);
 }
 
 
