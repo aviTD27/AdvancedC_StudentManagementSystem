@@ -140,15 +140,17 @@ void createAccount()
     chooseDepartment(&studentInformation);
     chooseCourse(&studentInformation);
 
+    getchar();
+
     inputString("\tEnter Address: ", studentInformation.studentAddress, 100);
     inputString("\tEnter Contact: ", studentInformation.studentContactNum, 15);
 
 
     // Read marks with validation (0-100)
-    studentInformation.marksAssignment = getValidMark("\t\t\tEnter Assignment Marks");
-    studentInformation.marksSmallExam = getValidMark("\t\t\tEnter Small Exam Marks");
-    studentInformation.marksFinalExam = getValidMark("\t\t\tEnter Final Exam Marks");
-    studentInformation.marksTutorial = getValidMark("\t\t\tEnter Tutorial Marks");
+    studentInformation.marksAssignment = getValidMark("\tEnter Assignment Marks");
+    studentInformation.marksSmallExam = getValidMark("\tEnter Small Exam Marks");
+    studentInformation.marksFinalExam = getValidMark("\tEnter Final Exam Marks");
+    studentInformation.marksTutorial = getValidMark("\tEnter Tutorial Marks");
 
 
 
@@ -265,7 +267,7 @@ void updateInfo()
                 }
                 else if (tchoice == 2)
                 {
-                    strcpy(tempInformation.studentDept, "International");
+                    strcpy(tempInformation.studentDept, "Int");
                 }
                 else
                 {
@@ -854,7 +856,7 @@ float getValidMark(const char* label)
 {
     float m;
     do {
-        printf("%s (0–100): ", label);
+        printf("%s (0-100): ", label);
         scanf("%f", &m);
     } while (m < 0 || m > 100);
     return m;
